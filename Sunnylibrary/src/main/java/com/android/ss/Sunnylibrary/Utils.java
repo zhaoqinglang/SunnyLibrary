@@ -1,5 +1,8 @@
 package com.android.ss.Sunnylibrary;
 
+import android.app.Activity;
+import android.app.ActivityManager;
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -8,12 +11,24 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Build;
+import android.os.Environment;
 import android.provider.MediaStore;
+import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
+import android.widget.EditText;
 
 import androidx.core.content.FileProvider;
 
@@ -33,7 +48,9 @@ import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 public class Utils {
     //sharedpreference
@@ -214,7 +231,7 @@ public class Utils {
         }
     }
 
-    //get app inf
+    //获取当前app信息
     public static int getAppVersionCode(Context context){
         int version = 0;
         try{
@@ -309,7 +326,7 @@ public class Utils {
         cursor.close();
         return filePath;
     }
-    //安装apk
+    //安装apk，需要自己判断安装路径是否存在
     public static void installApk(Context context,String downloadApk) {
         Log.i("sssss", "开始执行安装: " + downloadApk);
         File apkFile = new File(downloadApk);
@@ -334,5 +351,418 @@ public class Utils {
     public static String getUA(Context context){
         WebView webView = new WebView(context);
         return webView.getSettings().getUserAgentString();
+    }
+
+    //dp转px
+    public static int dp2px(Context context, float dpValue) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
+    }
+
+    //px转dp
+    public static int px2dp(Context context, float pxValue) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (pxValue / scale + 0.5f);
+    }
+
+    //获取设备MAC地址,需添加权限<uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    public static String getMacAddress(Context context) {
+        String macAddress = null;
+        WifiManager wifi = (WifiManager) context
+                .getSystemService(Context.WIFI_SERVICE);
+        WifiInfo info = wifi.getConnectionInfo();
+        if (null != info ) {
+            macAddress = info.getMacAddress();
+            if (null != macAddress) {
+                macAddress = macAddress.replace(":", "");
+            }
+        }
+        return macAddress;
+    }
+
+    //获取设备厂商，如Xiaomi
+    public static String getManufacturer() {
+        String MANUFACTURER = Build.MANUFACTURER;
+        return MANUFACTURER;
+    }
+
+    //获取设备型号，如MI2SC
+    public static String getModel() {
+        String model = Build.MODEL;
+        if (model != null) {
+            model = model.trim().replaceAll("\\s*", "");
+        } else {
+            model = "";
+        }
+        return model;
+    }
+
+    //获取设备SD卡是否可用
+    public static boolean isSDCardEnable() {
+        return Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState());
+    }
+
+    //获取设备SD卡路径
+    public static String getSDCardPath() {
+        return Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator;
+    }
+
+    //判断是否网络连接,需添加权限<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    public static boolean isNetConnected(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context
+                .getSystemService(Activity.CONNECTIVITY_SERVICE);
+        NetworkInfo info = cm.getActiveNetworkInfo();
+        return info != null && info.isConnected();
+    }
+
+    //判断wifi是否连接状态,需添加权限<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    public static boolean isWifiConnected(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context
+                .getSystemService(Context.CONNECTIVITY_SERVICE);
+        return cm != null && cm.getActiveNetworkInfo().getType() == ConnectivityManager.TYPE_WIFI;
+    }
+
+    //获取移动网络运营商名称
+    public static String getNetworkOperatorName(Context context) {
+        TelephonyManager tm = (TelephonyManager) context
+                .getSystemService(Context.TELEPHONY_SERVICE);
+        return tm != null ? tm.getNetworkOperatorName() : null;
+    }
+
+    //卸载指定包名的App，需要自行判断包名是否存在
+    public boolean uninstallApp(Context context, String packageName) {
+        if (!TextUtils.isEmpty(packageName)) {
+            Intent intent = new Intent(Intent.ACTION_DELETE);
+            intent.setData(Uri.parse("package:" + packageName));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+            return true;
+        }
+        return false;
+    }
+
+    //appinfo类，用于获取完整的app信息
+    public static class AppInfo {
+
+        private String name;
+        private Drawable icon;
+        private String packagName;
+        private String versionName;
+        private int versionCode;
+        private boolean isSD;
+        private boolean isUser;
+
+        public Drawable getIcon() {
+            return icon;
+        }
+
+        public void setIcon(Drawable icon) {
+            this.icon = icon;
+        }
+
+        public boolean isSD() {
+            return isSD;
+        }
+
+        public void setSD(boolean SD) {
+            isSD = SD;
+        }
+
+        public boolean isUser() {
+            return isUser;
+        }
+
+        public void setUser(boolean user) {
+            isUser = user;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getPackagName() {
+            return packagName;
+        }
+
+        public void setPackagName(String packagName) {
+            this.packagName = packagName;
+        }
+
+        public int getVersionCode() {
+            return versionCode;
+        }
+
+        public void setVersionCode(int versionCode) {
+            this.versionCode = versionCode;
+        }
+
+        public String getVersionName() {
+            return versionName;
+        }
+
+        public void setVersionName(String versionName) {
+            this.versionName = versionName;
+        }
+
+        /**
+         * @param name        名称
+         * @param icon        图标
+         * @param packagName  包名
+         * @param versionName 版本号
+         * @param versionCode 版本Code
+         * @param isSD        是否安装在SD卡
+         * @param isUser      是否是用户程序
+         */
+        public AppInfo(String name, Drawable icon, String packagName,
+                       String versionName, int versionCode, boolean isSD, boolean isUser) {
+            this.setName(name);
+            this.setIcon(icon);
+            this.setPackagName(packagName);
+            this.setVersionName(versionName);
+            this.setVersionCode(versionCode);
+            this.setSD(isSD);
+            this.setUser(isUser);
+        }
+    }
+    /**
+     * 获取当前App信息
+     * AppInfo（名称，图标，包名，版本号，版本Code，是否安装在SD卡，是否是用户程序）
+     */
+    public static AppInfo getAppInfo(Context context) {
+        PackageManager pm = context.getPackageManager();
+        PackageInfo pi = null;
+        try {
+            //此处替换包名是否可以获取其他app信息，待验证
+            pi = pm.getPackageInfo(context.getApplicationContext().getPackageName(), 0);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        return pi != null ? getBean(pm, pi) : null;
+    }
+
+    /**
+     * 得到AppInfo的Bean
+     */
+    private static AppInfo getBean(PackageManager pm, PackageInfo pi) {
+        ApplicationInfo ai = pi.applicationInfo;
+        String name = pi.packageName;
+        Drawable icon = ai.loadIcon(pm);
+        String packageName = pi.packageName;
+        String versionName = pi.versionName;
+        int versionCode = pi.versionCode;
+        boolean isSD = (ApplicationInfo.FLAG_SYSTEM & ai.flags) != ApplicationInfo.FLAG_SYSTEM;
+        boolean isUser = (ApplicationInfo.FLAG_SYSTEM & ai.flags) != ApplicationInfo.FLAG_SYSTEM;
+        return new AppInfo(name, icon, packageName, versionName, versionCode, isSD, isUser);
+    }
+
+    //打开指定包名的App
+    public static boolean openAppByPackageName(Context context, String packageName) {
+        if (!TextUtils.isEmpty(packageName)) {
+            PackageManager pm = context.getPackageManager();
+            Intent launchIntentForPackage = pm.getLaunchIntentForPackage(packageName);
+            if (launchIntentForPackage != null) {
+                context.startActivity(launchIntentForPackage);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    //打开指定包名的App应用信息界面
+    public static boolean openAppInfo(Context context, String packageName) {
+        if (!TextUtils.isEmpty(packageName)) {
+            Intent intent = new Intent();
+            intent.setAction("android.settings.APPLICATION_DETAILS_SETTINGS");
+            intent.setData(Uri.parse("package:" + packageName));
+            context.startActivity(intent);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 判断当前App处于前台还是后台
+     * 需添加<uses-permission android:name="android.permission.GET_TASKS"/>
+     * 并且必须是系统应用该方法才有效
+     */
+    public static boolean isAppBackgroundUSYS(Context context) {
+        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        @SuppressWarnings("deprecation")
+        List<ActivityManager.RunningTaskInfo> tasks = am.getRunningTasks(1);
+        if (!tasks.isEmpty()) {
+            ComponentName topActivity = tasks.get(0).topActivity;
+            if (!topActivity.getPackageName().equals(context.getPackageName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    //获取状态栏高度
+    public static int getStatusBarHeight(Context context) {
+        int result = 0;
+        int resourceId = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = context.getResources().getDimensionPixelSize(resourceId);
+        }
+        return result;
+    }
+
+    //获取ActionBar高度
+    public static int getActionBarHeight(Activity activity) {
+        TypedValue tv = new TypedValue();
+        if (activity.getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+            return TypedValue.complexToDimensionPixelSize(tv.data, activity.getResources().getDisplayMetrics());
+        }
+        return 0;
+    }
+
+    //动态隐藏软键盘
+    public static void hideSoftInput(Activity activity) {
+        View view = activity.getWindow().peekDecorView();
+        if (view != null) {
+            InputMethodManager inputmanger = (InputMethodManager) activity
+                    .getSystemService(Context.INPUT_METHOD_SERVICE);
+            inputmanger.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
+
+    public static void hideSoftInput(Context context, EditText edit) {
+        edit.clearFocus();
+        InputMethodManager inputmanger = (InputMethodManager) context
+                .getSystemService(Context.INPUT_METHOD_SERVICE);
+        inputmanger.hideSoftInputFromWindow(edit.getWindowToken(), 0);
+    }
+
+    //动态显示软键盘
+    public static void showSoftInput(Context context, EditText edit) {
+        edit.setFocusable(true);
+        edit.setFocusableInTouchMode(true);
+        edit.requestFocus();
+        InputMethodManager inputManager = (InputMethodManager) context
+                .getSystemService(Context.INPUT_METHOD_SERVICE);
+        inputManager.showSoftInput(edit, 0);
+    }
+
+    //验证手机号
+    private static final String REGEX_MOBILE = "^(13[0-9]|14[5|7]|15[0|1|2|3|5|6|7|8|9]|18[0|1|2|3|5|6|7|8|9])\\d{8}$";
+    //验证座机号,正确格式：xxx/xxxx-xxxxxxx/xxxxxxxx
+    private static final String REGEX_TEL = "^0\\d{2,3}[- ]?\\d{7,8}";
+    //验证邮箱
+    private static final String REGEX_EMAIL = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$";
+    //验证url
+    private static final String REGEX_URL = "http(s)?://([\\w-]+\\.)+[\\w-]+(/[\\w-./?%&=]*)?";
+    //验证汉字
+    private static final String REGEX_CHZ = "^[\\u4e00-\\u9fa5]+$";
+    //验证用户名,取值范围为a-z,A-Z,0-9,"_",汉字，不能以"_"结尾,用户名必须是6-20位
+    private static final String REGEX_USERNAME = "^[\\w\\u4e00-\\u9fa5]{6,20}(?<!_)$";
+    //验证IP地址
+    private static final String REGEX_IP = "((2[0-4]\\d|25[0-5]|[01]?\\d\\d?)\\.){3}(2[0-4]\\d|25[0-5]|[01]?\\d\\d?)";
+
+    //If u want more please visit http://toutiao.com/i6231678548520731137/
+
+    /**
+     * @param string 待验证文本
+     * @return 是否符合手机号格式
+     */
+    public static boolean isMobile(String string) {
+        return isMatch(REGEX_MOBILE, string);
+    }
+
+    /**
+     * @param string 待验证文本
+     * @return 是否符合座机号码格式
+     */
+    public static boolean isTel(String string) {
+        return isMatch(REGEX_TEL, string);
+    }
+
+    /**
+     * @param string 待验证文本
+     * @return 是否符合邮箱格式
+     */
+    public static boolean isEmail(String string) {
+        return isMatch(REGEX_EMAIL, string);
+    }
+
+    /**
+     * @param string 待验证文本
+     * @return 是否符合网址格式
+     */
+    public static boolean isURL(String string) {
+        return isMatch(REGEX_URL, string);
+    }
+
+    /**
+     * @param string 待验证文本
+     * @return 是否符合汉字
+     */
+    public static boolean isChz(String string) {
+        return isMatch(REGEX_CHZ, string);
+    }
+
+    /**
+     * @param string 待验证文本
+     * @return 是否符合用户名
+     */
+    public static boolean isUsername(String string) {
+        return isMatch(REGEX_USERNAME, string);
+    }
+
+    /**
+     * @param regex  正则表达式字符串
+     * @param string 要匹配的字符串
+     * @return 如果str 符合 regex的正则表达式格式,返回true, 否则返回 false;
+     */
+    public static boolean isMatch(String regex, String string) {
+        return !TextUtils.isEmpty(string) && Pattern.matches(regex, string);
+    }
+
+    //获取服务是否开启
+    public static boolean isRunningService(String className, Context context) {
+        // 进程的管理者,活动的管理者
+        ActivityManager activityManager = (ActivityManager)
+                context.getSystemService(Context.ACTIVITY_SERVICE);
+        // 获取正在运行的服务，最多获取1000个
+        List<ActivityManager.RunningServiceInfo> runningServices = activityManager.getRunningServices(1000);
+        // 遍历集合
+        for (ActivityManager.RunningServiceInfo runningServiceInfo : runningServices) {
+            ComponentName service = runningServiceInfo.service;
+            if (className.equals(service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+    public static final int PICK_PHOTO = 100;
+    public static final int TAKE_PHOTO = 101;
+    //从图库获取图片
+    public static void getPhotoFromGallery(Activity activity){
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
+        activity.startActivityForResult(intent,PICK_PHOTO);
+    }
+
+    //从相机获取图片
+    public static void getPhototFromCamera(String path,Activity activity){
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        File file = new File(path);
+        if (file.exists()){
+            file.delete();
+        }
+        Uri uri;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            uri = FileProvider.getUriForFile(activity, "com.camera.fileprovider", file);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        } else {
+            uri = Uri.fromFile(file);
+        }
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+        activity.startActivityForResult(intent,TAKE_PHOTO);
     }
 }
