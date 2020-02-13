@@ -104,12 +104,12 @@ public class HttpUtil {
     }
 
     public static void installApk(Context context,String downloadApk) {
-        Log.i("sssss", "开始执行安装: " + downloadApk);
+        Log.i(Utils.TAG, "开始执行安装: " + downloadApk);
         File apkFile = new File(downloadApk);
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            Log.w("sssss", "版本大于 N ，开始使用 fileProvider 进行安装");
+            Log.w(Utils.TAG, "版本大于 N ，开始使用 fileProvider 进行安装");
             intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             Uri contentUri = FileProvider.getUriForFile(
                     context
@@ -117,7 +117,7 @@ public class HttpUtil {
                     , apkFile);
             intent.setDataAndType(contentUri, "application/vnd.android.package-archive");
         } else {
-            Log.w("sssss", "正常进行安装");
+            Log.w(Utils.TAG, "正常进行安装");
             intent.setDataAndType(Uri.fromFile(apkFile), "application/vnd.android.package-archive");
         }
         context.startActivity(intent);
@@ -199,10 +199,10 @@ public class HttpUtil {
                  * 获取响应码 200=成功 当响应成功，获取响应的流
                  */
                 int res = conn.getResponseCode();
-                Log.e("sssss", "response code:" + res);
+                Log.e(Utils.TAG, "response code:" + res);
                 // if(res==200)
                 // {
-                Log.e("sssss", "request success");
+                Log.e(Utils.TAG, "request success");
                 InputStream input = conn.getInputStream();
                 StringBuffer sb1 = new StringBuffer();
                 int ss;
@@ -210,10 +210,10 @@ public class HttpUtil {
                     sb1.append((char) ss);
                 }
                 result = sb1.toString();
-                Log.e("sssss", "result : " + result);
+                Log.e(Utils.TAG, "result : " + result);
                 // }
                 // else{
-                // Log.e("sssss", "request error");
+                // Log.e(Utils.TAG, "request error");
                 // }
             }
         } catch (MalformedURLException e) {
@@ -234,7 +234,7 @@ public class HttpUtil {
                 try{
                     File dir = new File(HttpUtil.UPDATE_APK_PATH);
                     if (!dir.exists()){
-                        Log.d("sssss","mkdirs = "+dir.mkdirs());
+                        Log.d(Utils.TAG,"mkdirs = "+dir.mkdirs());
                     }
                     File file = new File(HttpUtil.UPDATE_APK_PATH , HttpUtil.UPDATE_APK_NAME);
                     if (file.exists()){
@@ -249,7 +249,7 @@ public class HttpUtil {
                         }
                     }
                 }catch (Exception e){
-                    Log.d("sssss","DownLoad Exception = "+e);
+                    Log.d(Utils.TAG,"DownLoad Exception = "+e);
                     e.printStackTrace();
                 }finally {
                     if (outputStream != null) {

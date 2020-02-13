@@ -54,6 +54,7 @@ import java.util.regex.Pattern;
 
 public class Utils {
     //sharedpreference
+    public static final String TAG = "zql";
     public static final String SPName = "zhaoqinglang";
 
     public static void put(Context context, String key, Object object) {
@@ -287,7 +288,7 @@ public class Utils {
             is.close();
             copyIsFinish = true;
         } catch (IOException e) {
-            Log.d("ssss","copyApkFromAssets IOException= "+e);
+            Log.d(TAG,"copyApkFromAssets IOException= "+e);
             e.printStackTrace();
         }
         return copyIsFinish;
@@ -301,7 +302,7 @@ public class Utils {
             return info.versionCode;
         }
         catch (Exception e) {
-            Log.d("ssss","getCallbackAppToInstallVerison Exception= "+e);
+            Log.d(TAG,"getCallbackAppToInstallVerison Exception= "+e);
             e.printStackTrace();
             info = null;
         }
@@ -328,12 +329,12 @@ public class Utils {
     }
     //安装apk，需要自己判断安装路径是否存在
     public static void installApk(Context context,String downloadApk) {
-        Log.i("sssss", "开始执行安装: " + downloadApk);
+        Log.i(TAG, "开始执行安装: " + downloadApk);
         File apkFile = new File(downloadApk);
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            Log.w("sssss", "版本大于 N ，开始使用 fileProvider 进行安装");
+            Log.w(TAG, "版本大于 N ，开始使用 fileProvider 进行安装");
             intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             Uri contentUri = FileProvider.getUriForFile(
                     context
@@ -341,7 +342,7 @@ public class Utils {
                     , apkFile);
             intent.setDataAndType(contentUri, "application/vnd.android.package-archive");
         } else {
-            Log.w("sssss", "正常进行安装");
+            Log.w(TAG, "正常进行安装");
             intent.setDataAndType(Uri.fromFile(apkFile), "application/vnd.android.package-archive");
         }
         context.startActivity(intent);

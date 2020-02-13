@@ -83,7 +83,7 @@ public class CallUtils {
                 result = phoneAccountHandleList.size() >= 2;
             }
         }catch (Exception e){
-            Log.d("ssss","isMultiSim Exception = "+e);
+            Log.d(Utils.TAG,"isMultiSim Exception = "+e);
             e.printStackTrace();
         }
         return result;
@@ -100,7 +100,7 @@ public class CallUtils {
                 phoneAccountHandleList = telecomManager.getCallCapablePhoneAccounts();
             }
         }catch (Exception e){
-            Log.d("ssss","isMultiSim Exception = "+e);
+            Log.d(Utils.TAG,"isMultiSim Exception = "+e);
             e.printStackTrace();
         }
         return phoneAccountHandleList;
