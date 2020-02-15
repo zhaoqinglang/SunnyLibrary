@@ -27,12 +27,6 @@ public class BaseActivity extends AppCompatActivity {
 
     protected void onBaseActivityCreate(){}
     public void showToast(String msg) {
-        if (null == mToast) {
-            mToast = Toast.makeText(this, msg, Toast.LENGTH_SHORT);
-            mToast.setGravity(Gravity.BOTTOM, 0, 0);
-        } else {
-            mToast.setText(msg);
-        }
-        mToast.show();
+        ToastUtils.showToast(BaseActivity.this,msg);
     }
 }
